@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  api:
+    image: dockerhost.charisma.tech/sample-api:1.0.0
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+    ports:
+      - 7000:8080
+
+  react-app:
+    image: dockerhost.charisma.tech/sample-react-app:1.0.0
+    environment:
+      - TARGET=http://localhost:8080
+    ports:
+      - 7003:7003
+  idp-bff-react-app:
+    image: dockerhost.charisma.tech/idp-bff:1.0.0
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+      - Sts__BaseUrl=https://auth-stage.charisma.digital
+      - Sts__ClientId=smpl__code
+      - Sts__ClientSecret=smpl__code_secret
+      - Sts__Scopes=openid profile smpl__weather offline_access
+      - ReverseProxy__plans=http://10.20.32.48:7000
+    network_mode: "service:react-app"
+
+  angular-app:
+    image: dockerhost.charisma.tech/sample-angular-app:1.0.0
+    environment:
+      - TARGET=http://localhost:8080
+    ports:
+      - 8003:8003
+  idp-bff-angular-app:
+    image: dockerhost.charisma.tech/idp-bff:1.0.0
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+      - Sts__BaseUrl=https://auth-stage.charisma.digital
+      - Sts__ClientId=smpl__code
+      - Sts__ClientSecret=smpl__code_secret
+      - Sts__Scopes=openid profile smpl__weather offline_access
+      - ReverseProxy__plans=http://10.20.32.48:7000
+    network_mode: "service:angular-app"
