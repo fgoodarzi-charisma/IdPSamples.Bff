@@ -3,6 +3,7 @@
 *.dotCover
 
 .vs
+*.next
 
 bin
 obj
@@ -27,6 +28,7 @@ _ReSharper*
 
 docs/.vuepress/dist
 /node_modules
+*/node_modules
 .vscode
 .idea
 appsettings.Development.json
