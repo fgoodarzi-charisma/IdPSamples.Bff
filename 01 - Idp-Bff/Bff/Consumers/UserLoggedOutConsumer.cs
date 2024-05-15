@@ -27,7 +27,7 @@ internal sealed class UserLoggedOutConsumer : IConsumer<IUserLoggedOut>
             {
                 UserId = context.Message.Id,
 #if DEBUG
-                Ip = "0.0.0.1",
+                Ip = "127.0.0.1",
 #else
                 Ip = context.Message.Ip,
 #endif

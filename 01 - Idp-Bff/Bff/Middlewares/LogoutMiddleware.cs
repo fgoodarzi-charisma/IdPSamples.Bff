@@ -52,7 +52,7 @@ public sealed class LogoutMiddleware
         {
             logger.LogXForwardedFor(xForwardedFor);
             var xForwardedHeaderStr = xForwardedFor.ToString().Split(',')[0];
-            xForwardedHeaderStr = string.Equals("::1", xForwardedHeaderStr) ? "0.0.0.1" : xForwardedHeaderStr;
+            xForwardedHeaderStr = string.Equals("::1", xForwardedHeaderStr) ? "127.0.0.1" : xForwardedHeaderStr;
             var ipHeader = xForwardedHeaderStr.Contains(':') ?
                 xForwardedHeaderStr.Remove(xForwardedHeaderStr.IndexOf(':')) :
                 xForwardedHeaderStr;

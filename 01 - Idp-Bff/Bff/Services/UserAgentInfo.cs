@@ -10,6 +10,6 @@ public sealed class UserAgentInfo
 
     public string Encode()
     {
-        return Base64UrlEncoder.Encode($"{UserId}__{Ip}__{UserAgent}");
+        return Base64UrlEncoder.Encode($"{UserId}__{UserAgent}");
     }
 }
