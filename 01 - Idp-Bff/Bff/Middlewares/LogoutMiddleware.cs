@@ -1,6 +1,7 @@
 ﻿using Charisma.AuthenticationManager.Extensions;
 using Charisma.AuthenticationManager.Services;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.AspNetCore.Authentication;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 
 namespace Charisma.AuthenticationManager.Middlewares;
@@ -14,32 +15,44 @@ public sealed class LogoutMiddleware
         _next = next;
     }
 
-    public async Task Invoke(HttpContext context, IConfiguration configuration, IDistributedCache cache,
-        ILogoutContext logoutContext, ILogger<LogoutMiddleware> logger)
+    public async Task Invoke(HttpContext context, ILogoutContext logoutContext, ILogger<LogoutMiddleware> logger, IConfiguration configuration)
     {
+        if (context.Request.Path.ToString().Contains("bff/login", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         var successUserIdParse = long.TryParse(context.User!.Claims.FirstOrDefault(c => c.Type == "sub")?.Value, out var userId);
+        var idToken = await context.GetTokenAsync("id_token");
+        string? sessionId = null;
+        if (!string.IsNullOrWhiteSpace(idToken))
+        {
+            var jwtToken = new JwtSecurityToken(idToken);
+            sessionId = jwtToken.Claims.FirstOrDefault(c => c.Type == "sid")?.Value;
+        }
         UserAgentInfo userAgentInfo = new()
         {
             UserId = successUserIdParse ? userId : long.MaxValue,
             Ip = GetIp(context, logger),
             UserAgent = context.Request.Headers.UserAgent!,
+            SessionId = sessionId,
         };
 
-        var userInfoHashKey = userAgentInfo.Encode();
+        logger.LogReceivingUserAgentInfo(userAgentInfo.UserId, userAgentInfo.Ip, userAgentInfo.UserAgent, sessionId);
 
-        logger.LogReceivingUserAgentInfo(userAgentInfo.UserId, userAgentInfo.Ip, userAgentInfo.UserAgent, userInfoHashKey);
-
-        if (logoutContext.Contain(userInfoHashKey) || cache.Get(userInfoHashKey) is not null)
+        if (!string.IsNullOrWhiteSpace(sessionId) && logoutContext.Contain(sessionId))
         {
-            context.Response.Cookies.Delete($"bff.session.{configuration.GetValue<string>("Sts:ApplicationRoute")}");
-            context.Request.Headers.Clear();
-            logoutContext.Remove(userInfoHashKey);
-            cache.Set(userInfoHashKey, [1], new DistributedCacheEntryOptions
+            var publicEndpoints = configuration.GetSection("PublicReverseProxy")?.Get<IDictionary<string, string>>() ??
+                new Dictionary<string, string>();
+            var isPublic = publicEndpoints.Keys.Select(k => $"/{k}/")
+                .Any(k => context.Request.Path.ToString().StartsWith(k, StringComparison.OrdinalIgnoreCase));
+            if (!isPublic)
             {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(2),
-            });
-
-            logger.UserLoggedOut(userId, userAgentInfo.Ip, userAgentInfo.UserAgent);
+                context.Response.StatusCode = 401;
+                logger.UserLoggedOut(userId, userAgentInfo.Ip, userAgentInfo.UserAgent);
+                return;
+            }
         }
 
         await _next(context);
@@ -47,27 +60,35 @@ public sealed class LogoutMiddleware
 
     private static string GetIp(HttpContext httpContext, ILogger<LogoutMiddleware> logger)
     {
-        IPAddress ip;
-        if (httpContext.Request.Headers.TryGetValue("x-forwarded-for", out var xForwardedFor))
+        try
         {
-            logger.LogXForwardedFor(xForwardedFor);
-            var xForwardedHeaderStr = xForwardedFor.ToString().Split(',')[0];
-            xForwardedHeaderStr = string.Equals("::1", xForwardedHeaderStr) ? "127.0.0.1" : xForwardedHeaderStr;
-            var ipHeader = xForwardedHeaderStr.Contains(':') ?
-                xForwardedHeaderStr.Remove(xForwardedHeaderStr.IndexOf(':')) :
-                xForwardedHeaderStr;
-            ip = IPAddress.Parse(ipHeader);
+            IPAddress ip;
+            if (httpContext.Request.Headers.TryGetValue("x-forwarded-for", out var xForwardedFor))
+            {
+                logger.LogXForwardedFor(xForwardedFor);
+                var xForwardedHeaderStr = xForwardedFor.ToString().Split(',')[0];
+                xForwardedHeaderStr = string.Equals("::1", xForwardedHeaderStr) ? "127.0.0.1" : xForwardedHeaderStr;
+                var ipHeader = xForwardedHeaderStr.Contains(':') ?
+                    xForwardedHeaderStr.Remove(xForwardedHeaderStr.IndexOf(':')) :
+                    xForwardedHeaderStr;
+                ip = IPAddress.Parse(ipHeader);
+            }
+            else
+            {
+                ip = httpContext!.Connection.RemoteIpAddress!;
+            }
+
+            var ipv4 = ip.MapToIPv4();
+            var ipv4Str = ipv4.ToString();
+
+            logger.LogExtractedIp(ipv4Str);
+
+            return ipv4Str;
         }
-        else
+        catch (Exception ex)
         {
-            ip = httpContext!.Connection.RemoteIpAddress!;
+            logger.LogFailedOnObtainingIp(ex);
+            return "Unknown IP";
         }
-
-        var ipv4 = ip.MapToIPv4();
-        var ipv4Str = ipv4.ToString();
-
-        logger.LogExtractedIp(ipv4Str);
-
-        return ipv4Str;
     }
 }

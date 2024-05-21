@@ -2,7 +2,6 @@ using Charisma.AuthenticationManager;
 using Charisma.AuthenticationManager.Extensions;
 using Charisma.AuthenticationManager.Services;
 using Duende.Bff.Yarp;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using Serilog.Exceptions;
@@ -48,7 +47,7 @@ try
         options.DefaultSignOutScheme = "oidc";
     }).AddCookie("cookie", options =>
     {
-        options.Cookie.Name = $"bff.session.{applicationName}";
+        options.Cookie.Name = $"bff.session.{applicationName}.{Guid.NewGuid():n}";
         options.Cookie.SameSite = SameSiteMode.Strict;
     })
     .AddOpenIdConnect("oidc", options =>
@@ -74,7 +73,7 @@ try
 
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
-        options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+        options.ForwardedHeaders = ForwardedHeaders.All;
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
     });
@@ -99,55 +98,34 @@ try
             .ReadFrom.Configuration(context.Configuration);
     });
 
-    var app = builder.Build();
+    builder.Services.AddCors();
 
+    var app = builder.Build();
     app.UseForwardedHeaders();
     app.UseExecptionHandler();
+    app.UseSchemeModifier();
     app.UseLogEnricher();
 
-    app.UseHostReformer();
+    app.UseHostModifier();
 
     app.UseSerilogRequestLogging();
+
+    app.UseCors(opt =>
+    {
+        opt.AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowAnyOrigin();
+    });
 
     app.UseDefaultFiles();
     app.UseStaticFiles();
 
-    app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseLogoutHandler();
     app.UseBff();
     app.UseAuthorization();
 
-    app.MapGet("/bff/token", async context =>
-    {
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        if (!context.User.Identity?.IsAuthenticated ?? true)
-        {
-            logger.LogUnauthorizedUser();
-            context.Response.StatusCode = 401;
-            return;
-        }
-
-        var tokenEndpoint = builder.Configuration.GetValue<string>("TokenEndpoint");
-        if (!string.Equals(tokenEndpoint, "enabled", StringComparison.OrdinalIgnoreCase))
-        {
-            logger.LogForbiddenTokenEndpoint();
-            context.Response.StatusCode = 403;
-            return;
-        }
-
-        var accessToken = await context.GetTokenAsync("access_token");
-        var idToken = await context.GetTokenAsync("id_token");
-        context.Response.StatusCode = 200;
-        context.Response.ContentType = "application/json";
-        var response = CharismaJson.Serialize(new List<object>
-        {
-            new { TokenName = "access_token", Token = accessToken, },
-            new { TokenName = "id_token", Token = idToken, },
-        });
-
-        await context.Response.WriteAsync(response);
-    });
+    app.MapTokenEndpoint();
 
     app.MapBffManagementEndpoints();
 

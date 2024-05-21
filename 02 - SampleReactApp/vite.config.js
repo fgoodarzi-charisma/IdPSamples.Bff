@@ -19,6 +19,10 @@ export default defineConfig({
         target,
         secure: false,
       },
+      "^/pub": {
+        target,
+        secure: false,
+      },
       "^/bff": {
         target,
         secure: false,

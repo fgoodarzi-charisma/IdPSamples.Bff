@@ -19,6 +19,10 @@ export class Home extends Component {
 
   componentDidMount() {
     (async () => this.populateTodos())();
+    fetch("/pub/public").then((rs) => rs.json()).then(data => {
+      console.log("Vahid", data);
+      this.setState({publicData: data});
+    });
   }
 
   async populateTodos() {
@@ -79,6 +83,8 @@ export class Home extends Component {
   render() {
     return (
       <>
+        <h2>Public Data: {this.state.publicData?.firstName} {this.state.publicData?.lastName}</h2>
+        <br />
         <div className="banner">
           <h1>TODOs</h1>
         </div>

@@ -57,15 +57,15 @@ public static partial class LoggerMessageDefinitions
     //=======================================================================================================================================//
 
     [LoggerMessage(EventId = 104, Level = LogLevel.Information,
-        Message = "Consuming logout message; User added to be logged out in the first receiving request. {MessageId}, {UserId}, {Ip}, {UserAgent}, {ElapsedTime}, {DateTime}, {SecurityLog}",
+        Message = "Consuming logout message; User added to be logged out in the first receiving request. {MessageId}, {UserId}, {Ip}, {UserAgent}, {SessionId}, {ElapsedTime}, {DateTime}, {SecurityLog}",
         SkipEnabledCheck = true)]
     private static partial void LogLogoutConsumer(this ILogger logger, Guid messageId, long userId, string ip,
-         string userAgent, TimeSpan elapsedTime, DateTime dateTime, byte securityLog);
+         string userAgent, string? sessionId, TimeSpan elapsedTime, DateTime dateTime, byte securityLog);
 
     public static void LogLogoutConsumer(this ILogger logger, Guid messageId, long userId,
-        string ip, string userAgent, TimeSpan elapsedTime)
+        string ip, string userAgent, string? sessionId, TimeSpan elapsedTime)
     {
-        LogLogoutConsumer(logger, messageId, userId, ip, userAgent, elapsedTime, DateTime.UtcNow, 1);
+        LogLogoutConsumer(logger, messageId, userId, ip, userAgent, sessionId, elapsedTime, DateTime.UtcNow, 1);
     }
 
     //=======================================================================================================================================//
@@ -135,15 +135,15 @@ public static partial class LoggerMessageDefinitions
     //=======================================================================================================================================//
 
     [LoggerMessage(EventId = 110, Level = LogLevel.Information,
-        Message = "Receiving user agent info. {UserId}, {Ip}, {UserAgent}, {EncodedUserAgentInfo}, {DateTime}, {SecurityLog}",
+        Message = "Receiving user agent info. {UserId}, {Ip}, {UserAgent}, {SessionId}, {DateTime}, {SecurityLog}",
         SkipEnabledCheck = true)]
     private static partial void LogReceivingUserAgentInfo(this ILogger logger, long userId, string? ip, string? userAgent,
-        string encodedUserAgentInfo, DateTime dateTime, byte securityLog);
+        string? sessionId, DateTime dateTime, byte securityLog);
 
     public static void LogReceivingUserAgentInfo(this ILogger logger, long userId, string? ip,
-        string? userAgent, string encodedUserAgentInfo)
+        string? userAgent, string? sessionId)
     {
-        LogReceivingUserAgentInfo(logger, userId, ip, userAgent, encodedUserAgentInfo, DateTime.UtcNow, 1);
+        LogReceivingUserAgentInfo(logger, userId, ip, userAgent, sessionId, DateTime.UtcNow, 1);
     }
 
     //=======================================================================================================================================//
@@ -167,6 +167,16 @@ public static partial class LoggerMessageDefinitions
     public static void LogForbiddenTokenEndpoint(this ILogger logger)
     {
         LogForbiddenTokenEndpoint(logger, DateTime.UtcNow, 0);
+    }
+
+    //=======================================================================================================================================//
+
+    [LoggerMessage(EventId = 113, Level = LogLevel.Error, Message = "Failed on obtaining IP, {DateTime}, {SecurityLog}", SkipEnabledCheck = true)]
+    private static partial void LogFailedOnObtainingIp(this ILogger logger, Exception ex, DateTime dateTime, byte securityLog);
+
+    public static void LogFailedOnObtainingIp(this ILogger logger, Exception ex)
+    {
+        LogFailedOnObtainingIp(logger, ex, DateTime.UtcNow, 0);
     }
 
     //=======================================================================================================================================//

@@ -9,9 +9,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="Charisma.IdentityServer.Bff.Yarp" Version="8.0.2" />
-		<PackageReference Include="Charisma.MessagingContracts" Version="1.0.0.12125" />
+		<PackageReference Include="Charisma.MessagingContracts" Version="1.0.0.13323" />
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.2.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.5" />
 		<PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
 		<PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
 		<PackageReference Include="Serilog.Enrichers.AssemblyName" Version="2.0.0" />

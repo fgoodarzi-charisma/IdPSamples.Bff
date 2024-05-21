@@ -7,4 +7,5 @@ internal sealed class UserLoggedOut : IUserLoggedOut
     public long Id { get; init; }
     public string Ip { get; init; } = default!;
     public string UserAgent { get; init; } = default!;
+    public string SessionId { get; init; } = default!;
 }

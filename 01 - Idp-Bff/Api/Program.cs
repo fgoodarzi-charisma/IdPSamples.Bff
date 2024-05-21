@@ -1,5 +1,6 @@
 using Api;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,16 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Map("/public", async (HttpContext context) =>
+{
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsync(JsonSerializer.Serialize(new
+    {
+        firstName = "Lionel",
+        lastName = "Messi",
+    }));
+});
 
 app.MapGroup("/todos")
     .ToDoGroup()

@@ -1,15 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
-
-namespace Charisma.AuthenticationManager.Services;
+﻿namespace Charisma.AuthenticationManager.Services;
 
 public sealed class UserAgentInfo
 {
-    public long UserId { get; init; } = default!;
+    public long UserId { get; init; }
     public string Ip { get; init; } = default!;
     public string UserAgent { get; init; } = default!;
-
-    public string Encode()
-    {
-        return Base64UrlEncoder.Encode($"{UserId}__{UserAgent}");
-    }
+    public string? SessionId { get; init; }
 }

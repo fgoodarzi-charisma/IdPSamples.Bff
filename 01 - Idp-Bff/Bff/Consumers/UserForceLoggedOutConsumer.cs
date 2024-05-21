@@ -28,7 +28,7 @@ internal sealed class UserForceLoggedOutConsumer : IConsumer<IUserForceLoggedOut
                 UserId = context.Message.Id,
             };
 
-            _logoutContext.Add(userAgentInfo.Encode(), userAgentInfo);
+            _logoutContext.Add(userAgentInfo.SessionId);
 
             var messageId = context.MessageId ?? Guid.Empty;
             _logger.LogForceLogoutConsumer(messageId, context.Message.Id, context.Message.Ip,

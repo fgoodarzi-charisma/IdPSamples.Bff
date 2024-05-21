@@ -11,36 +11,27 @@ internal sealed class LogoutContext : ILogoutContext
         _distributedCache = distributedCache;
     }
 
-    void ILogoutContext.Add(string key, UserAgentInfo user)
+    void ILogoutContext.Add(string? sessionId)
     {
-        _distributedCache.SetString(key, user.Encode(), new DistributedCacheEntryOptions
+        if (string.IsNullOrWhiteSpace(sessionId))
         {
-            AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(7),
+            return;
+        }
+
+        _distributedCache.SetString(sessionId, "1", new DistributedCacheEntryOptions
+        {
+            AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(30),
         });
     }
 
-    void ILogoutContext.Remove(string key)
+    void ILogoutContext.Remove(string sessionId)
     {
-        _distributedCache.Remove(key);
+        _distributedCache.Remove(sessionId);
     }
 
-    bool ILogoutContext.Contain(string key)
+    bool ILogoutContext.Contain(string sessionId)
     {
-        var value = _distributedCache.GetString(key);
-        return !string.IsNullOrWhiteSpace(value);
-    }
-
-    void ILogoutContext.MarkCookieToDelete(string cookie)
-    {
-        _distributedCache.SetString(cookie, "1", new DistributedCacheEntryOptions
-        {
-            AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(7),
-        });
-    }
-
-    bool ILogoutContext.ContainMarkToDeleteCookie(string cookie)
-    {
-        var value = _distributedCache.GetString(cookie);
+        var value = _distributedCache.GetString(sessionId);
         return !string.IsNullOrWhiteSpace(value);
     }
 }

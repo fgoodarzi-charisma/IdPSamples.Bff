@@ -2,13 +2,9 @@
 
 public interface ILogoutContext
 {
-    void Add(string key, UserAgentInfo user);
+    void Add(string? sessionId);
 
-    void Remove(string key);
+    void Remove(string sessionId);
 
-    bool Contain(string key);
-
-    void MarkCookieToDelete(string cookie);
-
-    bool ContainMarkToDeleteCookie(string cookie);
+    bool Contain(string sessionId);
 }

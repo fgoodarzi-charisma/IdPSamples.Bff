@@ -23,22 +23,11 @@ internal sealed class UserLoggedOutConsumer : IConsumer<IUserLoggedOut>
         {
             var startTime = Stopwatch.GetTimestamp();
 
-            UserAgentInfo userAgentInfo = new()
-            {
-                UserId = context.Message.Id,
-#if DEBUG
-                Ip = "127.0.0.1",
-#else
-                Ip = context.Message.Ip,
-#endif
-                UserAgent = context.Message.UserAgent,
-            };
-
-            _logoutContext.Add(userAgentInfo.Encode(), userAgentInfo);
+            _logoutContext.Add(context.Message.SessionId);
 
             var messageId = context.MessageId ?? Guid.Empty;
             _logger.LogLogoutConsumer(messageId, context.Message.Id, context.Message.Ip,
-                context.Message.UserAgent, Stopwatch.GetElapsedTime(startTime));
+                context.Message.UserAgent, context.Message.SessionId, Stopwatch.GetElapsedTime(startTime));
 
             await Task.CompletedTask;
         }
