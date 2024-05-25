@@ -8,6 +8,8 @@ import { AuthenticationService } from '../authentication.service';
   templateUrl: './todos.component.html',
 })
 export class TodosComponent implements OnInit {
+  publicData : string = '';
+
   private readonly todos = new BehaviorSubject<Todo[]>([]);
   public readonly todos$: Observable<Todo[]> = this.todos;
 
@@ -25,11 +27,13 @@ export class TodosComponent implements OnInit {
     private auth: AuthenticationService) { }
 
   public ngOnInit(): void {
+    this.fetchPublicData();
     this.authenticated$
       .pipe(
         filter(isAuthenticated => isAuthenticated),
         tap(() => {
           this.fetchTodos();
+     
         })
     ).subscribe();
   }
@@ -62,6 +66,17 @@ export class TodosComponent implements OnInit {
       .pipe(catchError(this.showError))
       .subscribe((todos) => {
         this.todos.next(todos);
+      });
+  }
+
+  private fetchPublicData(): void {
+    this.http
+      .get<any>('pub/public')
+      .pipe(catchError(this.showError))
+      .subscribe((data) => {
+        const name = `${data.firstName} ${data.lastName}`;
+        console.log(name);
+        this.publicData = name;
       });
   }
 
