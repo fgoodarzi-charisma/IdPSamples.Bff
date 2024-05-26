@@ -8,7 +8,7 @@ services:
       - 7000:8080
 
   react-app:
-    image: dockerhost.charisma.tech/sample-react-app:1.0.1-preview-2
+    image: dockerhost.charisma.tech/sample-react-app:1.0.1
     environment:
       - TARGET=http://localhost:8080
     ports:
@@ -28,7 +28,7 @@ services:
     network_mode: "service:react-app"
 
   angular-app:
-    image: dockerhost.charisma.tech/sample-angular-app:1.0.1-preview-2
+    image: dockerhost.charisma.tech/sample-angular-app:1.0.1
     environment:
       - TARGET=http://localhost:8080
     ports:
