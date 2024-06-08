@@ -1,12 +1,5 @@
 version: '3.8'
 services:
-  api:
-    image: dockerhost.charisma.tech/sample-api:1.0.1
-    environment:
-      - ASPNETCORE_HTTP_PORTS=8080
-    ports:
-      - 7000:8080
-
   react-app:
     image: dockerhost.charisma.tech/sample-react-app:1.0.1
     environment:
@@ -21,11 +14,17 @@ services:
       - Sts__ClientId=smpl__code
       - Sts__ClientSecret=smpl__code_secret
       - Sts__Scopes=openid profile smpl__weather offline_access
-      - ReverseProxy__plans=http://10.20.32.48:7000
-      - PublicReverseProxy__pub=http://10.20.32.48:7000
+      - ReverseProxy__plans=http://localhost:7002
+      - PublicReverseProxy__pub=http://localhost:7002
       - TokenEndpoint=Enabled
       - ConnectionStrings__RabbitMq=amqp://smpl:smpl@10.104.131.30:30100
     network_mode: "service:react-app"
+  react-api:
+    image: dockerhost.charisma.tech/sample-api:1.0.1
+    environment:
+      - ASPNETCORE_HTTP_PORTS=7002
+    network_mode: "service:react-app"
+    
 
   angular-app:
     image: dockerhost.charisma.tech/sample-angular-app:1.0.1
@@ -41,8 +40,13 @@ services:
       - Sts__ClientId=smpl__code
       - Sts__ClientSecret=smpl__code_secret
       - Sts__Scopes=openid profile smpl__weather offline_access
-      - ReverseProxy__plans=http://10.20.32.48:7000
-      - PublicReverseProxy__pub=http://10.20.32.48:7000
+      - ReverseProxy__plans=http://localhost:8002
+      - PublicReverseProxy__pub=http://localhost:8002
       - TokenEndpoint=Enabled
       - ConnectionStrings__RabbitMq=amqp://smpl:smpl@10.104.131.30:30100
     network_mode: "service:angular-app"
+  angular-api:
+    image: dockerhost.charisma.tech/sample-api:1.0.1
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8002
+    network_mode: "service:react-app"
